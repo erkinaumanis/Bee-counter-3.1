@@ -39,13 +39,16 @@
 */
 #define BYTES_VAL_T unsigned long
 
-int ploadPin        = 5;  // ORANGE - Connects to /PL aka Parallel load aka latch pin the 165
+int ploadPin        = 5;  // YELLOW - Connects to /PL aka Parallel load aka latch pin the 165
 int clockEnablePin  = 9;  // not used - Connects to Clock Enable pin the 165 (should always be low)
-int dataPin         = 6; // BLUE - Connects to the Q7 aka MISO pin the 165
-int clockPin        = 7; // GREEN - Connects to the Clock pin the 165
+int dataPin         = 6; // GREEN - Connects to the Q7 aka MISO pin the 165
+int clockPin        = 7; // WHITE - Connects to the Clock pin the 165
+int inbound = 0;
+int outbound = 0;
 
 BYTES_VAL_T pinValues;
 BYTES_VAL_T oldPinValues;
+BYTES_VAL_T oldOldPinValues;
 
 /* This function is essentially a "shift-in" routine reading the
  * serial Data from the shift register chips and representing
@@ -89,6 +92,7 @@ BYTES_VAL_T read_shift_regs()
 */
 void display_pin_values()
 {
+/*
     Serial.print("Pin States:\r\n");
 
     for(int i = 0; i < DATA_WIDTH; i++)
@@ -103,8 +107,21 @@ void display_pin_values()
             Serial.print("LOW");
 
         Serial.print("\r\n");
-    }
-
+        
+    }*/
+    for(int i  = 0; i < DATA_WIDTH; i+=2)
+    {
+          if((oldPinValues >> i & 0b11) == 0b11 && (pinValues >> i & 0b11) == 0b01){
+              inbound++;
+            }
+          else if((oldPinValues >> i & 0b11) == 0b11 && (pinValues >> i & 0b11) == 0b10){
+              outbound++;
+            }
+      }
+    Serial.print("Inbound: ");
+    Serial.print(inbound);
+    Serial.print(" Outbound: ");
+    Serial.print(outbound);
     Serial.print("\r\n");
 }
 
@@ -126,6 +143,7 @@ void setup()
     */
     pinValues = read_shift_regs();
     display_pin_values();
+    oldOldPinValues = oldPinValues;
     oldPinValues = pinValues;
 }
 
@@ -139,9 +157,10 @@ void loop()
     */
     if(pinValues != oldPinValues)
     {
-        Serial.print("*Pin value change detected*\r\n");
-        Serial.println(pinValues);
+        //Serial.print("*Pin value change detected*\r\n");
+        //Serial.println(pinValues);
         display_pin_values();
+        oldOldPinValues = oldPinValues;
         oldPinValues = pinValues;
     }
 
